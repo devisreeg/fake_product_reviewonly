@@ -1,23 +1,21 @@
-# LIBRARIES
 import streamlit as st
+import subprocess
 import pickle
 import nltk
 import pandas as pd
 from textblob import TextBlob
 from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer 
+from nltk.stem import  PorterStemmer 
 import re
-import review_crawler
 
 # LOAD PICKLE FILES
-model = pickle.load(open('best_model.pkl', 'rb'))  # make sure to rename the file without space
-vectorizer = pickle.load(open('count_vectorizer.pkl', 'rb')) 
+model = pickle.load(open('best_model (1).pkl','rb')) 
+vectorizer = pickle.load(open('count_vectorizer.pkl','rb')) 
 
-# Download stopwords once
 nltk.download('stopwords')
 sw = set(stopwords.words('english'))
 
-# TEXT PREPROCESSING FUNCTION
+# TEXT PREPROCESSING
 def text_preprocessing(review):
     txt = TextBlob(review)
     result = txt.correct()
@@ -38,47 +36,42 @@ def text_preprocessing(review):
 
     return " ".join(stemmed)
 
-# TEXT CLASSIFICATION FUNCTION
+# TEXT CLASSIFICATION
 def text_classification(review):
     if len(review) < 1:
-        st.write("Empty review.")    
+        st.write("  ")    
     else:
-        cleaned_review = text_preprocessing(review)
-        process = vectorizer.transform([cleaned_review]).toarray()
-        prediction = model.predict(process)
-        p = ''.join(str(i) for i in prediction)
-        st.write(f"**Review:** {review}")
+        with st.spinner("Classification in progress..."):
+            cleaned_review = text_preprocessing(review)
+            process = vectorizer.transform([cleaned_review]).toarray()
+            prediction = model.predict(process)
+            p = ''.join(str(i) for i in prediction)
+            st.write(review)
         
-        if p == 'True':
-            st.success("The review is Legitimate.")
-        elif p == 'False':
-            st.error("The review is Fake.")
-        else:
-            st.warning("Unknown classification result.")
+            if p == 'True':
+                st.success("The review entered is Legitimate.")
+            if p == 'False':
+                st.error("The review entered is Fake.")
 
-# STREAMLIT APP
+# MAIN APP
 def main():
-    st.title("🛒 Fake Review Detection For E-Commerce Electronics 🧠")
-    st.markdown("Using Machine Learning techniques to detect fake product reviews.")
+    st.title("Fake Review Detection Of E-Commerce Electronic Products Using Machine Learning Techniques")
 
-    st.subheader("Enter the Product URL:")
-    url = st.text_input("Product URL")
+    st.subheader("Fake Review Classifier")
+    url = st.text_input("Enter Review Page URL: ")
 
-    if st.button("Fetch & Check Reviews"):
-        if url:
-            with st.spinner("Fetching reviews..."):
-                # Assuming review_crawler has a function get_reviews(url) that returns a list of reviews
-                reviews = review_crawler.get_reviews(url)
-                if not reviews:
-                    st.warning("No reviews found or URL might be invalid.")
-                else:
-                    st.success(f"Fetched {len(reviews)} reviews!")
-                    for review in reviews:
-                        text_classification(review)
-        else:
-            st.error("Please enter a valid URL.")
+    if st.button("Check"):
+        with st.spinner("Crawling reviews..."):
+            # CALL crawler script as subprocess
+            subprocess.call(f"python review_crawler.py {url}", shell=True)
 
-# RUN MAIN
+        df = pd.read_csv('reviews1.csv')
+        reviews = df['body'].to_list()
+
+        for review in reviews:
+            text_classification(review)
+
 if __name__ == '__main__':
     main()
+
 
