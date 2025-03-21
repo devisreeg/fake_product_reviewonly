@@ -13,8 +13,8 @@ import review_crawler
 
 
 #LOAD PICKLE FILES
-model = pickle.load(open('Models/best_model.pkl','rb')) 
-vectorizer = pickle.load(open('Models/count_vectorizer.pkl','rb')) 
+model = pickle.load(open('best_model (1).pkl','rb')) 
+vectorizer = pickle.load(open('count_vectorizer.pkl','rb')) 
 
 #FOR STREAMLIT
 nltk.download('stopwords')
