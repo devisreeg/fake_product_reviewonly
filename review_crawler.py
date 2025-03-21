@@ -46,11 +46,17 @@ def get_reviews(url):
     short_url = url.split('/review')[0]
     process = CrawlerProcess(get_project_settings())
     crawler = process.create_crawler(TestSpider)
+    
     process.crawl(crawler, url=url, short_url=short_url)
-    process.start()
+    
+    # Prevent Scrapy from installing signal handlers
+    from twisted.internet import reactor
+    if not reactor.running:
+        reactor.run(installSignalHandlers=False)
     
     # Read scraped data from json and return list
     with open('reviews.json') as f:
         reviews = json.load(f)
     
     return [r['body'] for r in reviews]
+
